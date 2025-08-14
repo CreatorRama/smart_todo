@@ -253,6 +253,54 @@ class AITaskSuggestionView(APIView):
             )
 
 class TaskPrioritizationView(APIView):
+    def post(self, request):
+        try:
+            request_serializer = TaskPrioritizationRequestSerializer(data=request.data)
+            request_serializer.is_valid(raise_exception=True)
+            
+            validated_data = request_serializer.validated_data
+            task_ids = validated_data['task_ids']
+            context_entry_ids = validated_data.get('context_entries', [])
+            
+            # Get tasks with existence check
+            tasks = Task.objects.filter(id__in=task_ids)
+            if len(tasks) != len(task_ids):
+                missing_ids = set(task_ids) - set(t.id for t in tasks)
+                return Response(
+                    {"error": f"Tasks not found: {missing_ids}"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Process with AI
+            ai_manager = AITaskManager()
+            results = []
+            
+            for task in tasks:
+                try:
+                    result = ai_manager.prioritize_task(task)
+                    task.priority_score = result.get('priority_score', task.priority_score)
+                    task.save()
+                    results.append({
+                        'task_id': task.id,
+                        'priority_score': task.priority_score,
+                        'reasoning': result.get('reasoning', '')
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing task {task.id}: {str(e)}")
+                    results.append({
+                        'task_id': task.id,
+                        'error': str(e),
+                        'priority_score': task.priority_score
+                    })
+            
+            return Response(results, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Task prioritization failed: {str(e)}", exc_info=True)
+            return Response(
+                {"error": "Task prioritization failed", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     """
     POST API for bulk task prioritization based on context
     """
