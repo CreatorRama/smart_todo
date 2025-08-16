@@ -192,6 +192,10 @@ class ContextEntryViewSet(viewsets.ModelViewSet):
         }
         
         return Response(response_data, status=status.HTTP_201_CREATED)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request):
+        return {}
 
 class TaskTagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TaskTag.objects.all()

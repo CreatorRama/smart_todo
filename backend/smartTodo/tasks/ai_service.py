@@ -2,7 +2,6 @@ import requests
 import json
 import time
 import logging
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from django.conf import settings
 from django.utils import timezone

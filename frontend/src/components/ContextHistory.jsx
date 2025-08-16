@@ -130,7 +130,7 @@ const ContextHistory = ({ className = '', onContextSelect }) => {
 
     const handleDelete = async (entryId) => {
         try {
-            await contextAPI.deleteContextEntry(entryId);
+            await contextAPI.deleteContextEntry({entryId});
             setContextEntries(prev => prev.filter(entry => entry.id !== entryId));
             toast.success('Context entry deleted');
         } catch (error) {

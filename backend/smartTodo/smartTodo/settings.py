@@ -118,7 +118,7 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 # LM Studio Configuration
-LM_STUDIO_BASE_URL = os.getenv('LM_STUDIO_BASE_URL', 'http://192.168.194.161:1234')
+LM_STUDIO_BASE_URL = os.getenv('LM_STUDIO_BASE_URL', 'http://192.168.4.161:1234')
 LM_STUDIO_MODEL = os.getenv('LM_STUDIO_MODEL', 'llama-3.2-3b-instruct')
 LM_STUDIO_TIMEOUT = int(os.getenv('LM_STUDIO_TIMEOUT', 30))  # seconds
 LM_STUDIO_MAX_RETRIES = int(os.getenv('LM_STUDIO_MAX_RETRIES', 3))
