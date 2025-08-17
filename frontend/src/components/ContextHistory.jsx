@@ -32,13 +32,25 @@ const ContextEntry = ({ entry, onDelete }) => {
 
     const IconComponent = getSourceIcon(entry.source_type);
 
+    // Helper function to safely extract task text
+    const getTaskText = (task) => {
+        if (typeof task === 'string') {
+            return task;
+        }
+        if (typeof task === 'object' && task !== null) {
+            // Try common task object properties
+            return task.title || task.task || task.description || task.name || JSON.stringify(task);
+        }
+        return 'Invalid task data';
+    };
+
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200">
             <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center space-x-2">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSourceColor(entry.source_type)}`}>
                         <IconComponent className="w-3 h-3 mr-1" />
-                        {entry.source_type.charAt(0).toUpperCase() + entry.source_type.slice(1)}
+                        {entry.source_type?.charAt(0).toUpperCase() + entry.source_type?.slice(1)}
                     </span>
                     <span className="text-sm text-gray-500">
                         {formatDateTime(entry.timestamp)}
@@ -73,18 +85,24 @@ const ContextEntry = ({ entry, onDelete }) => {
                             </p>
                         )}
 
-                        {entry.processed_insights.extracted_tasks && entry.processed_insights.extracted_tasks.length > 0 && (
+                        {entry.processed_insights.extracted_tasks && 
+                         Array.isArray(entry.processed_insights.extracted_tasks) && 
+                         entry.processed_insights.extracted_tasks.length > 0 && (
                             <div className="text-sm text-blue-700">
                                 <strong>Extracted Tasks:</strong>
                                 <ul className="list-disc list-inside mt-1 ml-2">
                                     {entry.processed_insights.extracted_tasks.slice(0, 3).map((task, index) => (
-                                        <li key={index}>{truncateText(task, 60)}</li>
+                                        <li key={index}>
+                                            {truncateText(getTaskText(task), 60)}
+                                        </li>
                                     ))}
                                 </ul>
                             </div>
                         )}
 
-                        {entry.processed_insights.urgency_indicators && entry.processed_insights.urgency_indicators.length > 0 && (
+                        {entry.processed_insights.urgency_indicators && 
+                         Array.isArray(entry.processed_insights.urgency_indicators) && 
+                         entry.processed_insights.urgency_indicators.length > 0 && (
                             <div className="text-sm text-blue-700 mt-2">
                                 <strong>Urgency Indicators:</strong> {entry.processed_insights.urgency_indicators.slice(0, 3).join(', ')}
                             </div>
@@ -110,19 +128,42 @@ const ContextHistory = ({ className = '', onContextSelect }) => {
                 page_size: 10
             });
 
-            const newEntries = response.data.results || response.data;
-
-            if (reset) {
-                setContextEntries(newEntries);
-            } else {
-                setContextEntries(prev => [...prev, ...newEntries]);
+            // Ensure we get a valid array
+            let newEntries = [];
+            if (response?.data) {
+                if (Array.isArray(response.data.results)) {
+                    newEntries = response.data.results;
+                } else if (Array.isArray(response.data)) {
+                    newEntries = response.data;
+                } else {
+                    console.warn('Unexpected API response structure:', response.data);
+                    newEntries = [];
+                }
             }
 
-            setHasMore(newEntries.length === 10);
+            // Validate entries have required fields
+            const validEntries = newEntries.filter(entry => 
+                entry && 
+                typeof entry === 'object' && 
+                entry.id !== undefined && 
+                entry.content !== undefined
+            );
+
+            if (reset) {
+                setContextEntries(validEntries);
+            } else {
+                setContextEntries(prev => [...prev, ...validEntries]);
+            }
+
+            setHasMore(validEntries.length === 10);
             setPage(pageNum);
         } catch (error) {
             console.error('Failed to load context entries:', error);
             toast.error('Failed to load context history');
+            // Set empty array on error to prevent rendering issues
+            if (reset) {
+                setContextEntries([]);
+            }
         } finally {
             setLoading(false);
         }
@@ -130,7 +171,7 @@ const ContextHistory = ({ className = '', onContextSelect }) => {
 
     const handleDelete = async (entryId) => {
         try {
-            await contextAPI.deleteContextEntry({entryId});
+            await contextAPI.deleteContextEntry(entryId);
             setContextEntries(prev => prev.filter(entry => entry.id !== entryId));
             toast.success('Context entry deleted');
         } catch (error) {

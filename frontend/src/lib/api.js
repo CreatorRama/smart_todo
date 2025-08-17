@@ -59,6 +59,10 @@ export const categoriesAPI = {
 // Context API
 export const contextAPI = {
   getContextEntries: (params = {}) => api.get('/context-entries/', { params }),
+  deleteContextEntry: (id) =>
+  api.delete('/context-entries/delete_context/', {
+    data: { id }   
+  }),
   createContextEntry: (contextData) => api.post('/context-entries/', contextData),
   bulkCreateContextEntries: (contextArray) => api.post('/context-entries/bulk_create/', contextArray),
 };

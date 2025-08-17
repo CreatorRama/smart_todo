@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { 
-  Plus, 
-  LayoutDashboard, 
-  CheckSquare, 
+import {
+  Plus,
+  LayoutDashboard,
+  CheckSquare,
   MessageCircle,
   Settings,
   Menu,
@@ -22,6 +22,7 @@ import Dashboard from '../components/Dashboard';
 import ContextHistory from '../components/ContextHistory';
 import Button from '../components/ui/Button';
 import toast from 'react-hot-toast';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 export default function Home() {
   // State management
@@ -32,53 +33,57 @@ export default function Home() {
   const [editingTask, setEditingTask] = useState(null);
   const [contextEntries, setContextEntries] = useState([]);
   const [selectedTasks, setSelectedTasks] = useState([]);
-  
+
   // Custom hooks
-  const { 
-    tasks, 
-    loading: tasksLoading, 
-    createTask, 
-    updateTask, 
-    deleteTask, 
+  const {
+    tasks,
+    loading: tasksLoading,
+    createTask,
+    updateTask,
+    deleteTask,
     refetch: refetchTasks,
-    updateParams: updateTaskFilters 
+    updateParams: updateTaskFilters
   } = useTasks();
-  
+
   const { loading: aiLoading, prioritizeTasks } = useAI();
 
   // Load context entries
   useEffect(() => {
     const loadContextEntries = async () => {
       try {
-        const response = await contextAPI.getContextEntries({ page_size: 50 });
-        setContextEntries(response.data.results || response.data);
+        const response = await contextAPI.getContextEntries({ page_size: 10 });
+        // Ensure we're always working with an array
+        const entries = Array.isArray(response.data)
+          ? response.data
+          : (response.data.results || []);
+        setContextEntries(entries);
       } catch (error) {
         console.error('Failed to load context entries:', error);
       }
     };
-    
+
     loadContextEntries();
   }, []);
 
   // Navigation items
   const navigation = [
-    { 
-      id: 'dashboard', 
-      name: 'Dashboard', 
-      icon: LayoutDashboard, 
-      count: null 
+    {
+      id: 'dashboard',
+      name: 'Dashboard',
+      icon: LayoutDashboard,
+      count: null
     },
-    { 
-      id: 'tasks', 
-      name: 'Tasks', 
-      icon: CheckSquare, 
-      count: tasks.length 
+    {
+      id: 'tasks',
+      name: 'Tasks',
+      icon: CheckSquare,
+      count: tasks.length
     },
-    { 
-      id: 'context', 
-      name: 'Context', 
-      icon: MessageCircle, 
-      count: contextEntries.length 
+    {
+      id: 'context',
+      name: 'Context',
+      icon: MessageCircle,
+      count: contextEntries.length
     },
   ];
 
@@ -152,20 +157,18 @@ export default function Home() {
               setCurrentView(item.id);
               setIsMobileMenuOpen(false);
             }}
-            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-              isActive
-                ? 'bg-primary-100 text-primary-700 border-r-2 border-primary-500'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`}
+            className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${isActive
+              ? 'bg-primary-100 text-primary-700 border-r-2 border-primary-500'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
           >
             <item.icon className="w-5 h-5 mr-3" />
             {item.name}
             {item.count !== null && (
-              <span className={`ml-auto px-2 py-1 text-xs rounded-full ${
-                isActive 
-                  ? 'bg-primary-200 text-primary-800' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
+              <span className={`ml-auto px-2 py-1 text-xs rounded-full ${isActive
+                ? 'bg-primary-200 text-primary-800'
+                : 'bg-gray-200 text-gray-600'
+                }`}>
                 {item.count}
               </span>
             )}
@@ -180,7 +183,7 @@ export default function Home() {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard />;
-      
+
       case 'tasks':
         return (
           <div className="space-y-6">
@@ -197,7 +200,7 @@ export default function Home() {
                   <Plus className="w-4 h-4 mr-2" />
                   New Task
                 </Button>
-                
+
                 {selectedTasks.length > 0 && (
                   <Button
                     onClick={handleBulkPrioritize}
@@ -269,7 +272,7 @@ export default function Home() {
                       onChange={() => toggleTaskSelection(task.id)}
                       className="absolute top-2 left-2 z-10 w-4 h-4 text-primary-600 bg-white border-gray-300 rounded focus:ring-primary-500"
                     />
-                    
+
                     <TaskCard
                       task={task}
                       onEdit={handleTaskEdit}
@@ -283,7 +286,7 @@ export default function Home() {
             )}
           </div>
         );
-      
+
       case 'context':
         return (
           <div className="space-y-6">
@@ -292,7 +295,7 @@ export default function Home() {
                 <h2 className="text-2xl font-bold text-gray-900">Daily Context</h2>
                 <p className="text-gray-600">Add your daily context to get AI-powered task suggestions.</p>
               </div>
-              
+
               <Button
                 onClick={() => setIsContextFormOpen(true)}
                 className="inline-flex items-center"
@@ -302,10 +305,12 @@ export default function Home() {
               </Button>
             </div>
 
-            <ContextHistory />
+            <ErrorBoundary>
+              <ContextHistory />
+            </ErrorBoundary>
           </div>
         );
-      
+
       default:
         return <Dashboard />;
     }

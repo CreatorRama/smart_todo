@@ -4,13 +4,11 @@ import {
   MessageSquare, 
   Mail, 
   FileText, 
-  Upload,
   Plus 
 } from 'lucide-react';
 import { contextAPI } from '../lib/api';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
-import Input from './ui/Input';
 import toast from 'react-hot-toast';
 
 const ContextForm = ({ 

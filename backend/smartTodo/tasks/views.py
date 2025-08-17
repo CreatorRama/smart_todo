@@ -193,10 +193,38 @@ class ContextEntryViewSet(viewsets.ModelViewSet):
         
         return Response(response_data, status=status.HTTP_201_CREATED)
     
-    @action(detail=False, methods=['post'])
-    def bulk_delete(self, request):
-        return {}
+    @action(detail=False, methods=['delete'])
+    def delete_context(self, request):
+        """
+        Delete a single context entry.
+        Expects an integer ID in request.data['id']
+        """
+        context_id = request.data.get('id')
+        print()
 
+        # Validate input
+        if not isinstance(context_id, int):
+            return Response(
+                {'error': 'Expected an integer ID'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Perform delete
+        deleted_count, _ = ContextEntry.objects.filter(id=context_id).delete()
+
+        if deleted_count == 0:
+            return Response(
+                {'error': 'ContextEntry with given ID not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(
+            {
+                'deleted': deleted_count,
+                'success': True
+            },
+            status=status.HTTP_200_OK
+        )
 class TaskTagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TaskTag.objects.all()
     serializer_class = TaskTagSerializer
@@ -216,10 +244,12 @@ class AITaskSuggestionView(APIView):
     
     def post(self, request):
         request_serializer = AITaskSuggestionRequestSerializer(data=request.data)
+        
         if not request_serializer.is_valid():
             return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         validated_data = request_serializer.validated_data
+        
         task_data = validated_data['task_data']
         context_entry_ids = validated_data.get('context_entries', [])
         user_preferences = validated_data.get('user_preferences', {})
@@ -233,7 +263,7 @@ class AITaskSuggestionView(APIView):
             if context_entry_ids:
                 context_entries = ContextEntry.objects.filter(id__in=context_entry_ids)
                 
-            print(task_data)
+            print("context_entry_ids",context_entry_ids)
             
             # Get AI recommendations
             recommendations = ai_manager.get_task_recommendations(
@@ -242,7 +272,7 @@ class AITaskSuggestionView(APIView):
                 user_preferences=user_preferences,
                 current_task_load=current_task_load
             )
-            
+            print("recommendations: ",recommendations)
             response_serializer = AITaskSuggestionResponseSerializer(data=recommendations)
             if response_serializer.is_valid():
                 return Response(response_serializer.data, status=status.HTTP_200_OK)

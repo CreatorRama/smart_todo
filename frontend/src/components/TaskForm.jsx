@@ -128,7 +128,21 @@ const TaskForm = ({
             return;
         }
 
+        const CovertToArray=(obj)=>{
+            const arr=[]
+            Object.entries(obj).map(([key,value])=>{
+                
+                if(value.id) arr.push(value.id)
+            })
+
+            console.log(arr);
+
+            return arr
+        }
+
         try {
+            console.log(typeof(contextEntries));
+            console.log(contextEntries);
             const suggestions = await getTaskSuggestions(
                 {
                     title: watchedValues.title,
@@ -137,7 +151,7 @@ const TaskForm = ({
                     priority: watchedValues.priority,
                     estimated_duration: parseInt(watchedValues.estimated_duration) || null
                 },
-                contextEntries,
+                CovertToArray(contextEntries),
                 {},
                 0
             );

@@ -109,6 +109,42 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'ai_service.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'tasks.ai_service': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -117,8 +153,8 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-# LM Studio Configuration
-LM_STUDIO_BASE_URL = os.getenv('LM_STUDIO_BASE_URL', 'http://192.168.4.161:1234')
-LM_STUDIO_MODEL = os.getenv('LM_STUDIO_MODEL', 'llama-3.2-3b-instruct')
-LM_STUDIO_TIMEOUT = int(os.getenv('LM_STUDIO_TIMEOUT', 30))  # seconds
-LM_STUDIO_MAX_RETRIES = int(os.getenv('LM_STUDIO_MAX_RETRIES', 3))
+LM_STUDIO_BASE_URL = 'http://192.168.51.161:1234'
+LM_STUDIO_MODEL = 'llama-3.2-3b-instruct'  
+LM_STUDIO_TIMEOUT = 45
+LM_STUDIO_MAX_RETRIES = 3
+

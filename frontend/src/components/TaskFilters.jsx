@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Filter, 
-  Search, 
-  SortAsc, 
-  Calendar,
+import {
+  Filter,
+  Search,
+  SortAsc,
   Tag,
   RotateCcw,
   ChevronDown,
@@ -14,11 +13,11 @@ import { categoriesAPI, tagsAPI } from '../lib/api';
 import Button from './ui/Button';
 import Input from './ui/Input';
 
-const TaskFilters = ({ 
-  onFiltersChange, 
+const TaskFilters = ({
+  onFiltersChange,
   currentFilters = {},
   className = '',
-  isLoading = false 
+  isLoading = false
 }) => {
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
@@ -86,19 +85,19 @@ const TaskFilters = ({
   // Load filter data with better error handling
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadFilterData = async () => {
       setIsLoadingData(true);
       setError(null);
-      
+
       try {
         const [categoriesRes, tagsRes] = await Promise.all([
           categoriesAPI.getCategories().catch(err => ({ data: [], error: err })),
           tagsAPI.getTags().catch(err => ({ data: [], error: err }))
         ]);
-        
+
         if (!isMounted) return;
-        
+
         // Handle categories
         if (categoriesRes.error) {
           console.warn('Failed to load categories:', categoriesRes.error);
@@ -106,7 +105,7 @@ const TaskFilters = ({
           const categoriesData = extractArrayData(categoriesRes.data, 'Categories');
           setCategories(categoriesData);
         }
-        
+
         // Handle tags
         if (tagsRes.error) {
           console.warn('Failed to load tags:', tagsRes.error);
@@ -114,7 +113,7 @@ const TaskFilters = ({
           const tagsData = extractArrayData(tagsRes.data, 'Tags');
           setTags(tagsData);
         }
-        
+
       } catch (error) {
         if (isMounted) {
           console.error('Failed to load filter data:', error);
@@ -128,9 +127,9 @@ const TaskFilters = ({
         }
       }
     };
-    
+
     loadFilterData();
-    
+
     return () => {
       isMounted = false;
     };
@@ -139,12 +138,12 @@ const TaskFilters = ({
   // Debounced search handler
   const handleSearchChange = useCallback((value) => {
     setFilters(prev => ({ ...prev, search: value }));
-    
+
     // Clear existing timer
     if (searchDebounceTimer) {
       clearTimeout(searchDebounceTimer);
     }
-    
+
     // Set new timer
     const timer = setTimeout(() => {
       const newFilters = { ...filters, search: value };
@@ -153,7 +152,7 @@ const TaskFilters = ({
       );
       onFiltersChange(cleanFilters);
     }, 300);
-    
+
     setSearchDebounceTimer(timer);
   }, [searchDebounceTimer, filters, onFiltersChange]);
 
@@ -161,12 +160,12 @@ const TaskFilters = ({
   const handleFilterChange = useCallback((key, value) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
-    
+
     // Remove empty filters
     const cleanFilters = Object.fromEntries(
       Object.entries(newFilters).filter(([_, v]) => v !== '')
     );
-    
+
     onFiltersChange(cleanFilters);
   }, [filters, onFiltersChange]);
 
@@ -174,7 +173,7 @@ const TaskFilters = ({
   const resetFilters = useCallback(() => {
     setFilters(defaultFilters);
     onFiltersChange({ ordering: '-priority_score' });
-    
+
     // Clear search debounce timer
     if (searchDebounceTimer) {
       clearTimeout(searchDebounceTimer);
@@ -188,14 +187,14 @@ const TaskFilters = ({
   }, [handleFilterChange]);
 
   // Check if there are active filters
-  const hasActiveFilters = useMemo(() => 
-    Object.entries(filters).some(([key, value]) => 
+  const hasActiveFilters = useMemo(() =>
+    Object.entries(filters).some(([key, value]) =>
       value !== '' && value !== defaultFilters[key]
     ), [filters, defaultFilters]);
 
   // Count active filters
-  const activeFilterCount = useMemo(() => 
-    Object.entries(filters).filter(([key, value]) => 
+  const activeFilterCount = useMemo(() =>
+    Object.entries(filters).filter(([key, value]) =>
       value !== '' && value !== defaultFilters[key]
     ).length, [filters, defaultFilters]);
 
@@ -225,7 +224,7 @@ const TaskFilters = ({
           <p className="text-sm text-yellow-700">{error}</p>
         </div>
       )}
-      
+
       <div className="p-4">
         {/* Search and Toggle */}
         <div className="flex items-center space-x-4 mb-4">
@@ -250,7 +249,7 @@ const TaskFilters = ({
               </button>
             )}
           </div>
-          
+
           <Button
             variant="outline"
             onClick={() => setIsExpanded(!isExpanded)}
@@ -279,7 +278,7 @@ const TaskFilters = ({
           <div className="mb-4 flex flex-wrap gap-2">
             {Object.entries(filters).map(([key, value]) => {
               if (!value || value === defaultFilters[key]) return null;
-              
+
               let displayValue = value;
               if (key === 'category') {
                 const category = categories.find(c => c.id?.toString() === value?.toString());
@@ -291,7 +290,7 @@ const TaskFilters = ({
                 const option = sortOptions.find(opt => opt.value === value);
                 displayValue = option?.label || value;
               }
-              
+
               return (
                 <span
                   key={key}
@@ -415,11 +414,10 @@ const TaskFilters = ({
                   <button
                     onClick={() => handleFilterChange('tag', '')}
                     disabled={isLoading}
-                    className={`px-3 py-1 text-sm rounded-full border transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      filters.tag === '' 
-                        ? 'bg-primary-500 text-white border-primary-500' 
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                    }`}
+                    className={`px-3 py-1 text-sm rounded-full border transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${filters.tag === ''
+                      ? 'bg-primary-500 text-white border-primary-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
                     aria-pressed={filters.tag === ''}
                   >
                     All Tags
@@ -427,17 +425,16 @@ const TaskFilters = ({
                   {tags.slice(0, 15).map(tag => {
                     const tagName = getDisplayName(tag);
                     const tagValue = typeof tag === 'string' ? tag : tag.name || tag.id;
-                    
+
                     return (
                       <button
                         key={tag.id || tagName}
                         onClick={() => handleFilterChange('tag', tagValue)}
                         disabled={isLoading}
-                        className={`px-3 py-1 text-sm rounded-full border transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed truncate max-w-32 ${
-                          filters.tag === tagValue
-                            ? 'bg-primary-500 text-white border-primary-500' 
-                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                        }`}
+                        className={`px-3 py-1 text-sm rounded-full border transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed truncate max-w-32 ${filters.tag === tagValue
+                          ? 'bg-primary-500 text-white border-primary-500'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                          }`}
                         title={tagName}
                         aria-pressed={filters.tag === tagValue}
                       >
@@ -462,7 +459,7 @@ const TaskFilters = ({
               <div className="text-sm text-gray-500">
                 {activeFilterCount > 0 && `${activeFilterCount} filter${activeFilterCount !== 1 ? 's' : ''} active`}
               </div>
-              
+
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
